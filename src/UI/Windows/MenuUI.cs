@@ -85,20 +85,26 @@ public class MenuUI : MonoBehaviour
 
    public void OnGUI()
 {
+    // 1. Safety check
     if (!isGUIActive || MalumMenu.isPanicked) return;
 
-    InitStyles();
-    // REMOVED: UIHelpers.ApplyUIColor(); <- This was drawing the texture that caused the crash.
-    
-    // If you still want the accent color without the crash, 
-    // use a simplified version of ApplyUIColor that only sets the color:
-    if (CheatToggles.rgbMode) 
-        GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f);
-    else 
-        GUI.backgroundColor = GUIStylePreset.AccentBlue;
+    // 2. Apply Theme (Replaces the broken InitStyles call)
+    GUIStylePreset.ApplyToSkin();
 
+    // 3. Optional: Set Accent Color (Replacing the crashy ApplyUIColor)
+    if (CheatToggles.rgbMode) 
+    {
+        GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f); 
+    }
+    else 
+    {
+        GUI.backgroundColor = GUIStylePreset.AccentBlue;
+    }
+
+    // 4. Reset style cache to ensure textures are fresh
     GUIStylePreset.Reset();
 
+    // 5. Draw the Window
     _windowRect = GUI.Window(
         (int)WindowId.MenuUI,
         _windowRect,
@@ -107,7 +113,6 @@ public class MenuUI : MonoBehaviour
         GUIStylePreset.WindowStyle
     );
 }
-
     public void WindowFunction(int windowID)
     {
         // Top-border accent line
