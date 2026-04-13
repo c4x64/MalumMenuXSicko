@@ -1,7 +1,10 @@
-name: Build MalumMenuXSicko
+name: MalumMenu Build Pipeline
+
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
   workflow_dispatch:
 
 jobs:
@@ -9,25 +12,23 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
       with:
-        submodules: recursive
+        dotnet-version: 6.0.x 
 
-    - name: Add MSBuild to PATH
-      uses: microsoft/setup-msbuild@v2
-
-    - name: Restore NuGet packages
-      run: nuget restore MalumMenu.sln
+    - name: Restore Dependencies
+      run: dotnet restore MalumMenu.sln
 
     - name: Build Solution
-      # We removed the /p:Platform part so it doesn't error out
-      run: msbuild MalumMenu.sln /p:Configuration=Release
-      
-    - name: Upload Artifact
+      run: dotnet build MalumMenu.sln --configuration Release --no-restore
+
+    - name: Upload MalumMenu DLL
       uses: actions/upload-artifact@v4
       with:
-        name: MalumMenu-DLL
-        path: |
-          **/Release/*.dll
-          **/x64/Release/*.dll
-          **/Win32/Release/*.dll
+        name: MalumMenu-Release
+        # This searches the src folder's output for your compiled DLL
+        path: src/bin/Release/**/MalumMenu.dll
