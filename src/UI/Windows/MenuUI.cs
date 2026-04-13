@@ -55,16 +55,11 @@ public class MenuUI : MonoBehaviour
         );
     }
 
-    // Apply theme overrides to default skin
+    // Apply theme overrides to default skin — runs every frame so all
+    // bare GUILayout.Toggle / Button / HorizontalSlider calls are themed.
     public void InitStyles()
     {
-        // Base font size for any unstyled controls
-        GUI.skin.toggle.fontSize = GUI.skin.button.fontSize = GUI.skin.label.fontSize = 13;
-
-        // Override default skin text colours
-        GUI.skin.label.normal.textColor = GUIStylePreset.TextPrimary;
-        GUI.skin.toggle.normal.textColor  = GUIStylePreset.TextSecondary;
-        GUI.skin.toggle.onNormal.textColor = GUIStylePreset.AccentBlue;
+        GUIStylePreset.ApplyToSkin();
     }
 
     private void Update()

@@ -151,6 +151,13 @@ public struct CheatToggles
     public static bool loadProfile;
     public static bool saveProfile;
 
+    //Host's imposter
+    public static bool becomeImpposter;
+    public static bool becomeViper;
+    public static bool becomeShapeShifter;
+    public static bool becomePhantom;
+
+
     // Keybind Map: Toggle Name -> KeyCode (KeyCode.None == No Key)
     public static readonly Dictionary<string, KeyCode> Keybinds = new();
 
