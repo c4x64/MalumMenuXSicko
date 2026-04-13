@@ -85,22 +85,25 @@ public class MenuUI : MonoBehaviour
 
    public void OnGUI()
 {
-    // Safety guard: don't draw if inactive or panicked
     if (!isGUIActive || MalumMenu.isPanicked) return;
 
-    // 1. Ensure the custom skin is applied
-    GUIStylePreset.ApplyToSkin();
+    InitStyles();
+    // REMOVED: UIHelpers.ApplyUIColor(); <- This was drawing the texture that caused the crash.
+    
+    // If you still want the accent color without the crash, 
+    // use a simplified version of ApplyUIColor that only sets the color:
+    if (CheatToggles.rgbMode) 
+        GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f);
+    else 
+        GUI.backgroundColor = GUIStylePreset.AccentBlue;
 
-    // 2. Apply the accent color (Blue or RGB)
-    UIHelpers.ApplyUIColor();
+    GUIStylePreset.Reset();
 
-    // 3. Draw the actual window
-    // Note: We removed the Blur call from here to prevent crashes
     _windowRect = GUI.Window(
         (int)WindowId.MenuUI,
         _windowRect,
         (GUI.WindowFunction)WindowFunction,
-        "  ◈  MalumMenu",
+        "  ◈  MalumMenu  v" + MalumMenu.malumVersion,
         GUIStylePreset.WindowStyle
     );
 }
