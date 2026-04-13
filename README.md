@@ -39,6 +39,7 @@
 
 | Mod Version| Among Us - Version | Link |
 |----------|-------------|-----------------|
+| v3.0.3 | 17.3 (2026.4.8 )<br>17.2.2 ( 2026.3.17 ) | [Download](https://github.com/scp222thj/MalumMenu/releases/tag/v3.0.2) |
 | v3.0.2 | 17.2.2 ( 2026.3.17 )<br>17.2.1 ( 2026.2.24 ) | [Download](https://github.com/scp222thj/MalumMenu/releases/tag/v3.0.2) |
 | v3.0.1 | 17.2.2 ( 2026.3.17 )<br>17.2.1 ( 2026.2.24 ) | [Download](https://github.com/scp222thj/MalumMenu/releases/tag/v3.0.1) |
 | v3.0.0 | 17.2.1 ( 2026.2.24 ) | [Download](https://github.com/scp222thj/MalumMenu/releases/tag/v3.0.0) |
