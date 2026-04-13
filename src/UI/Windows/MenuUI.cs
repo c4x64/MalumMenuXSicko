@@ -83,29 +83,27 @@ public class MenuUI : MonoBehaviour
         // ... [Rest of your Update logic remains the same] ...
     }
 
-    public void OnGUI()
-    {
-        // Safety guard
-        if (!isGUIActive || MalumMenu.isPanicked) return;
+   public void OnGUI()
+{
+    // Safety guard: don't draw if inactive or panicked
+    if (!isGUIActive || MalumMenu.isPanicked) return;
 
-        // 1. IMPORTANT: Set the global skin once per frame
-        GUIStylePreset.ApplyToSkin();
+    // 1. Ensure the custom skin is applied
+    GUIStylePreset.ApplyToSkin();
 
-        // 2. Apply "Blur" (Full screen dark overlay)
-        UIHelpers.ApplyBlurEffect();
+    // 2. Apply the accent color (Blue or RGB)
+    UIHelpers.ApplyUIColor();
 
-        // 3. Set the accent color (Blue or RGB)
-        UIHelpers.ApplyUIColor();
-
-        // 4. Draw the actual window
-        _windowRect = GUI.Window(
-            (int)WindowId.MenuUI,
-            _windowRect,
-            (GUI.WindowFunction)WindowFunction,
-            "  ◈  MalumMenu",
-            GUIStylePreset.WindowStyle
-        );
-    }
+    // 3. Draw the actual window
+    // Note: We removed the Blur call from here to prevent crashes
+    _windowRect = GUI.Window(
+        (int)WindowId.MenuUI,
+        _windowRect,
+        (GUI.WindowFunction)WindowFunction,
+        "  ◈  MalumMenu",
+        GUIStylePreset.WindowStyle
+    );
+}
 
     public void WindowFunction(int windowID)
     {
