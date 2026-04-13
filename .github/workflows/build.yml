@@ -2,9 +2,7 @@ name: Build MalumMenuXSicko
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-  workflow_dispatch: # This line creates the "Run workflow" button
+  workflow_dispatch:
 
 jobs:
   build:
@@ -19,16 +17,17 @@ jobs:
       uses: microsoft/setup-msbuild@v2
 
     - name: Restore NuGet packages
-      working-directory: ${{env.GITHUB_WORKSPACE}}
       run: nuget restore MalumMenu.sln
 
     - name: Build Solution
-      working-directory: ${{env.GITHUB_WORKSPACE}}
-      # We change x64 to x86 and ensure the quotes are handled
-      run: msbuild MalumMenu.sln /p:Configuration=Release /p:Platform=x86
+      # We removed the /p:Platform part so it doesn't error out
+      run: msbuild MalumMenu.sln /p:Configuration=Release
       
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: MalumMenu-DLL
-        path: x64/Release/*.dll
+        path: |
+          **/Release/*.dll
+          **/x64/Release/*.dll
+          **/Win32/Release/*.dll
