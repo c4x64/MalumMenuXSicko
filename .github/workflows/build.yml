@@ -1,0 +1,33 @@
+name: Build MalumMenuXSicko
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch: # This line creates the "Run workflow" button
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore MalumMenu.sln
+
+    - name: Build Solution
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild MalumMenu.sln /p:Configuration=Release /p:Platform=x64
+      
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: MalumMenu-DLL
+        path: x64/Release/*.dll
