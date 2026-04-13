@@ -24,7 +24,8 @@ jobs:
 
     - name: Build Solution
       working-directory: ${{env.GITHUB_WORKSPACE}}
-      run: msbuild MalumMenu.sln /p:Configuration=Release /p:Platform=x64
+      # We change x64 to x86 and ensure the quotes are handled
+      run: msbuild MalumMenu.sln /p:Configuration=Release /p:Platform=x86
       
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
