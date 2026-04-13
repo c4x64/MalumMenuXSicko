@@ -4,39 +4,67 @@ namespace MalumMenu;
 
 public static class UIHelpers
 {
-    public static bool DrawToggle(bool value, string label)
+    // Solid 1x1 texture used for blur-style dark overlay background
+    private static Texture2D _blurOverlay;
+
+    private static Texture2D BlurOverlay
     {
-        GUILayout.BeginHorizontal();
-        GUILayout.Label(label, GUILayout.ExpandWidth(true));
-
-        if (GUILayout.Button("", GUIStylePreset.NormalToggle))
+        get
         {
-            value = !value;
+            if (_blurOverlay == null)
+            {
+                _blurOverlay = new Texture2D(1, 1);
+                // Near-black with very slight blue tint — mimics frosted glass / backdrop blur
+                _blurOverlay.SetPixel(0, 0, new Color(0.04f, 0.04f, 0.07f, 0.88f));
+                _blurOverlay.Apply();
+            }
+            return _blurOverlay;
         }
-
-        Rect lastRect = GUILayoutUtility.GetLastRect();
-        float circleSize = 18f;
-        float padding = (lastRect.height - circleSize) / 2f;
-        float xPos = value ? (lastRect.xMax - circleSize - padding) : (lastRect.xMin + padding);
-
-        Color oldColor = GUI.backgroundColor;
-        GUI.backgroundColor = Color.white;
-        
-        // Draw the slider circle
-        GUI.Box(new Rect(xPos, lastRect.y + padding, circleSize, circleSize), "", GUI.skin.button);
-        
-        GUI.backgroundColor = oldColor;
-
-        GUILayout.EndHorizontal();
-        return value;
     }
 
+    /// <summary>
+    /// Call once per frame before drawing the window.
+    /// Sets GUI.backgroundColor to the blue accent (or RGB-cycled colour),
+    /// and draws a full-screen dark blur-style overlay behind the menu.
+    /// </summary>
     public static void ApplyUIColor()
     {
+        // ── Full-screen "blur" backing overlay ────────────────────
+        // Unity IMGUI has no real backdrop blur, but a semi-transparent
+        // dark panel behind the window achieves the frosted-glass feel.
+        GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), BlurOverlay);
+
+        // ── Accent colour for window chrome / buttons ─────────────
         if (CheatToggles.rgbMode)
         {
-            GUI.backgroundColor = Color.HSVToRGB(MenuUI.hue, 1f, 1f);
+            // RGB mode: cycle through hues
+            GUI.backgroundColor = Color.HSVToRGB(MenuUI.hue, 0.85f, 1f);
         }
-        // Additional global color logic can go here
+        else
+        {
+            var configHtmlColor = MalumMenu.menuHtmlColor.Value;
+
+            // If no custom colour set, use the default blue accent
+            if (string.IsNullOrEmpty(configHtmlColor))
+            {
+                GUI.backgroundColor = GUIStylePreset.AccentBlue;
+                return;
+            }
+
+            if (!ColorUtility.TryParseHtmlString(configHtmlColor, out var uiColor))
+            {
+                if (!configHtmlColor.StartsWith("#"))
+                {
+                    if (ColorUtility.TryParseHtmlString("#" + configHtmlColor, out uiColor))
+                    {
+                        GUI.backgroundColor = uiColor;
+                    }
+                }
+            }
+            else
+            {
+                GUI.backgroundColor = uiColor;
+            }
+        }
     }
 }
