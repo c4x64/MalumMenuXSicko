@@ -151,24 +151,25 @@ public class MenuUI : MonoBehaviour
     }
 
     public void OnGUI()
-    {
-        if (!isGUIActive || MalumMenu.isPanicked) return;
+{
+    if (!isGUIActive || MalumMenu.isPanicked) return;
 
-        InitStyles();
-        UIHelpers.ApplyUIColor(); // draws dark overlay + sets accent colour
+    // 1. Draw the "Blur" over the game first
+    UIHelpers.ApplyBlurEffect();
 
-        // Reset style cache each frame so textures match current skin state
-        GUIStylePreset.Reset();
+    // 2. Apply colors and reset styles
+    UIHelpers.ApplyUIColor();
+    GUIStylePreset.Reset();
 
-        // Draw themed window
-        _windowRect = GUI.Window(
-            (int)WindowId.MenuUI,
-            _windowRect,
-            (GUI.WindowFunction)WindowFunction,
-            "  ◈  MalumMenu  v" + MalumMenu.malumVersion,
-            GUIStylePreset.WindowStyle
-        );
-    }
+    // 3. Draw the actual window on top of the blur
+    _windowRect = GUI.Window(
+        (int)WindowId.MenuUI,
+        _windowRect,
+        (GUI.WindowFunction)WindowFunction,
+        "  ◈  MalumMenu",
+        GUIStylePreset.WindowStyle
+    );
+}
 
     public void WindowFunction(int windowID)
     {

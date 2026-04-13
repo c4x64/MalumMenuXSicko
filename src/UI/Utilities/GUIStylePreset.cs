@@ -44,17 +44,17 @@ public static class GUIStylePreset
     {
         var pix = new Color[w * h];
         for (var i = 0; i < pix.Length; i++) pix[i] = col;
+        // IL2CPP requires explicit size without constructor params for best compatibility
         var t = new Texture2D(w, h);
         t.SetPixels(pix);
         t.Apply();
         return t;
     }
 
-    // Rounded pill texture (approximated with a wide flat rect, Unity IMGUI has no native border-radius)
     public static Texture2D MakeRoundedTex(Color col)  => MakeTex(4, 4, col);
 
     // ══════════════════════════════════════════════════════════════
-    //  STYLES
+    //  STYLES (Fixed for IL2CPP)
     // ══════════════════════════════════════════════════════════════
 
     public static GUIStyle WindowStyle
@@ -70,8 +70,8 @@ public static class GUIStylePreset
                 _windowStyle.onNormal.textColor  = TextPrimary;
                 _windowStyle.fontSize  = 13;
                 _windowStyle.fontStyle = FontStyle.Bold;
-                _windowStyle.padding   = new RectOffset(8, 8, 24, 8);
-                _windowStyle.border    = new RectOffset(4, 4, 4, 4);
+                _windowStyle.padding   = new RectOffset { left = 8, right = 8, top = 24, bottom = 8 };
+                _windowStyle.border    = new RectOffset { left = 4, right = 4, top = 4, bottom = 4 };
             }
             return _windowStyle;
         }
@@ -85,15 +85,14 @@ public static class GUIStylePreset
             {
                 _separator = new GUIStyle(GUI.skin.box);
                 _separator.normal.background = MakeTex(2, 2, SeparatorColor);
-                _separator.margin  = new RectOffset { top = 4, bottom = 4 };
-                _separator.padding = new RectOffset();
-                _separator.border  = new RectOffset();
+                _separator.margin  = new RectOffset { left = 0, right = 0, top = 4, bottom = 4 };
+                _separator.padding = new RectOffset { left = 0, right = 0, top = 0, bottom = 0 };
+                _separator.border  = new RectOffset { left = 0, right = 0, top = 0, bottom = 0 };
             }
             return _separator;
         }
     }
 
-    // ── Standard button (used by tab content & default skin) ──────
     public static GUIStyle NormalButton
     {
         get
@@ -112,15 +111,14 @@ public static class GUIStylePreset
                 _normalButton.fontSize   = 13;
                 _normalButton.fontStyle  = FontStyle.Normal;
                 _normalButton.alignment  = TextAnchor.MiddleCenter;
-                _normalButton.padding    = new RectOffset(8, 8, 5, 5);
-                _normalButton.margin     = new RectOffset(2, 2, 2, 2);
-                _normalButton.border     = new RectOffset(3, 3, 3, 3);
+                _normalButton.padding    = new RectOffset { left = 8, right = 8, top = 5, bottom = 5 };
+                _normalButton.margin     = new RectOffset { left = 2, right = 2, top = 2, bottom = 2 };
+                _normalButton.border     = new RectOffset { left = 3, right = 3, top = 3, bottom = 3 };
             }
             return _normalButton;
         }
     }
 
-    // ── Toggle (checkbox) ─────────────────────────────────────────
     public static GUIStyle NormalToggle
     {
         get
@@ -128,14 +126,12 @@ public static class GUIStylePreset
             if (_normalToggle == null)
             {
                 _normalToggle = new GUIStyle(GUI.skin.toggle);
-                // OFF state
                 _normalToggle.normal.background   = MakeTex(2, 2, BgButton);
                 _normalToggle.hover.background    = MakeTex(2, 2, BgButtonHover);
                 _normalToggle.active.background   = MakeTex(2, 2, BgButtonHover);
                 _normalToggle.normal.textColor    = TextSecondary;
                 _normalToggle.hover.textColor     = TextPrimary;
                 _normalToggle.active.textColor    = TextPrimary;
-                // ON state
                 _normalToggle.onNormal.background  = MakeTex(2, 2, BgToggleOn);
                 _normalToggle.onHover.background   = MakeTex(2, 2, new Color(0.10f, 0.45f, 1.00f, 0.55f));
                 _normalToggle.onActive.background  = MakeTex(2, 2, AccentBlue);
@@ -143,16 +139,15 @@ public static class GUIStylePreset
                 _normalToggle.onHover.textColor    = Color.white;
                 _normalToggle.onActive.textColor   = Color.white;
                 _normalToggle.fontSize  = 13;
-                _normalToggle.padding   = new RectOffset(22, 4, 5, 5);
-                _normalToggle.margin    = new RectOffset(2, 2, 3, 3);
-                _normalToggle.border    = new RectOffset(3, 3, 3, 3);
-                _normalToggle.overflow  = new RectOffset(0, 0, 0, 0);
+                _normalToggle.padding   = new RectOffset { left = 22, right = 4, top = 5, bottom = 5 };
+                _normalToggle.margin    = new RectOffset { left = 2, right = 2, top = 3, bottom = 3 };
+                _normalToggle.border    = new RectOffset { left = 3, right = 3, top = 3, bottom = 3 };
+                _normalToggle.overflow  = new RectOffset { left = 0, right = 0, top = 0, bottom = 0 };
             }
             return _normalToggle;
         }
     }
 
-    // ── Horizontal slider track ───────────────────────────────────
     public static GUIStyle SliderTrack
     {
         get
@@ -161,15 +156,14 @@ public static class GUIStylePreset
             {
                 _sliderTrack = new GUIStyle(GUI.skin.horizontalSlider);
                 _sliderTrack.normal.background = MakeTex(2, 4, TrackColor);
-                _sliderTrack.border = new RectOffset(3, 3, 3, 3);
+                _sliderTrack.border = new RectOffset { left = 3, right = 3, top = 3, bottom = 3 };
                 _sliderTrack.fixedHeight = 6f;
-                _sliderTrack.margin = new RectOffset(2, 2, 8, 8);
+                _sliderTrack.margin = new RectOffset { left = 2, right = 2, top = 8, bottom = 8 };
             }
             return _sliderTrack;
         }
     }
 
-    // ── Horizontal slider thumb ───────────────────────────────────
     public static GUIStyle SliderThumb
     {
         get
@@ -182,13 +176,12 @@ public static class GUIStylePreset
                 _sliderThumb.active.background  = MakeTex(2, 2, Color.white);
                 _sliderThumb.fixedWidth  = 14f;
                 _sliderThumb.fixedHeight = 14f;
-                _sliderThumb.border = new RectOffset(3, 3, 3, 3);
+                _sliderThumb.border = new RectOffset { left = 3, right = 3, top = 3, bottom = 3 };
             }
             return _sliderThumb;
         }
     }
 
-    // ── Vertical scrollbar track ──────────────────────────────────
     public static GUIStyle ScrollbarTrack
     {
         get
@@ -198,13 +191,12 @@ public static class GUIStylePreset
                 _scrollbarTrack = new GUIStyle(GUI.skin.verticalScrollbar);
                 _scrollbarTrack.normal.background = MakeTex(2, 2, ScrollbarBg);
                 _scrollbarTrack.fixedWidth = 6f;
-                _scrollbarTrack.border = new RectOffset(2, 2, 2, 2);
+                _scrollbarTrack.border = new RectOffset { left = 2, right = 2, top = 2, bottom = 2 };
             }
             return _scrollbarTrack;
         }
     }
 
-    // ── Vertical scrollbar thumb ──────────────────────────────────
     public static GUIStyle ScrollbarThumb
     {
         get
@@ -216,13 +208,12 @@ public static class GUIStylePreset
                 _scrollbarThumb.hover.background   = MakeTex(2, 2, AccentBlueHover);
                 _scrollbarThumb.active.background  = MakeTex(2, 2, AccentBlue);
                 _scrollbarThumb.fixedWidth = 6f;
-                _scrollbarThumb.border = new RectOffset(2, 2, 2, 2);
+                _scrollbarThumb.border = new RectOffset { left = 2, right = 2, top = 2, bottom = 2 };
             }
             return _scrollbarThumb;
         }
     }
 
-    // ── Text field ────────────────────────────────────────────────
     public static GUIStyle TextField
     {
         get
@@ -235,15 +226,14 @@ public static class GUIStylePreset
                 _textField.normal.textColor    = TextPrimary;
                 _textField.focused.textColor   = Color.white;
                 _textField.fontSize  = 13;
-                _textField.padding   = new RectOffset(8, 8, 5, 5);
-                _textField.margin    = new RectOffset(2, 2, 2, 2);
-                _textField.border    = new RectOffset(3, 3, 3, 3);
+                _textField.padding   = new RectOffset { left = 8, right = 8, top = 5, bottom = 5 };
+                _textField.margin    = new RectOffset { left = 2, right = 2, top = 2, bottom = 2 };
+                _textField.border    = new RectOffset { left = 3, right = 3, top = 3, bottom = 3 };
             }
             return _textField;
         }
     }
 
-    // ── Tab sidebar button ────────────────────────────────────────
     public static GUIStyle TabButton
     {
         get
@@ -260,9 +250,9 @@ public static class GUIStylePreset
                 _tabButton.fontSize  = 13;
                 _tabButton.fontStyle = FontStyle.Bold;
                 _tabButton.alignment = TextAnchor.MiddleLeft;
-                _tabButton.padding   = new RectOffset(10, 6, 7, 7);
-                _tabButton.margin    = new RectOffset(0, 0, 1, 1);
-                _tabButton.border    = new RectOffset(0, 0, 0, 0);
+                _tabButton.padding   = new RectOffset { left = 10, right = 6, top = 7, bottom = 7 };
+                _tabButton.margin    = new RectOffset { left = 0, right = 0, top = 1, bottom = 1 };
+                _tabButton.border    = new RectOffset { left = 0, right = 0, top = 0, bottom = 0 };
             }
             return _tabButton;
         }
@@ -279,7 +269,6 @@ public static class GUIStylePreset
         }
     }
 
-    // ── Section title ─────────────────────────────────────────────
     public static GUIStyle TabTitle
     {
         get
@@ -291,7 +280,7 @@ public static class GUIStylePreset
                 _tabTitle.fontSize  = 18;
                 _tabTitle.fontStyle = FontStyle.Bold;
                 _tabTitle.alignment = TextAnchor.MiddleLeft;
-                _tabTitle.padding   = new RectOffset(0, 0, 2, 6);
+                _tabTitle.padding   = new RectOffset { left = 0, right = 0, top = 2, bottom = 6 };
             }
             return _tabTitle;
         }
@@ -308,17 +297,12 @@ public static class GUIStylePreset
                 _tabSubtitle.fontSize  = 12;
                 _tabSubtitle.fontStyle = FontStyle.Bold;
                 _tabSubtitle.alignment = TextAnchor.MiddleLeft;
-                _tabSubtitle.padding   = new RectOffset(0, 0, 0, 4);
+                _tabSubtitle.padding   = new RectOffset { left = 0, right = 0, top = 0, bottom = 4 };
             }
             return _tabSubtitle;
         }
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //  APPLY ALL STYLES TO DEFAULT SKIN
-    //  Call this once per frame inside InitStyles() so every bare
-    //  GUILayout.Toggle / Button / etc. picks up the theme.
-    // ══════════════════════════════════════════════════════════════
     public static void ApplyToSkin()
     {
         GUI.skin.button                  = NormalButton;
@@ -336,9 +320,6 @@ public static class GUIStylePreset
         GUI.skin.button.fontSize         = 13;
     }
 
-    // ══════════════════════════════════════════════════════════════
-    //  RESET (drop cached styles so they rebuild next frame)
-    // ══════════════════════════════════════════════════════════════
     public static void Reset()
     {
         _separator      = null;
