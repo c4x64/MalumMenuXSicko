@@ -327,12 +327,6 @@ public static class GUIStylePreset
         GUI.skin.label.fontSize         = 13;
         GUI.skin.toggle.fontSize        = 13;
         GUI.skin.button.fontSize        = 13;
-        if (Separator == null)
-        {
-            Separator = new GUIStyle(GUI.skin.box);
-            Separator.normal.background = _accentTex; // Use the solid blue texture
-            Separator.border = new RectOffset(0, 0, 0, 0); // Keep it sharp
-        }
     }
 
     // ── Reset cached styles ───────────────────────────────────────
@@ -351,7 +345,4 @@ public static class GUIStylePreset
         _scrollbarTrack = null;
         _textField      = null;
     }
-
-    // Inside your ApplyToSkin() method in GUIStylePreset.cs
-
 }
