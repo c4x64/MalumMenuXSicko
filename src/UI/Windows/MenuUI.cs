@@ -135,64 +135,52 @@ public class MenuUI : MonoBehaviour
     {
         if (!isGUIActive || MalumMenu.isPanicked) return;
 
+        GUIStylePreset.ApplyToSkin();
+
+        if (CheatToggles.rgbMode)
+            GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f);
+        else
+            GUI.backgroundColor = GUIStylePreset.AccentBlue;
+
+        // Wrap in try-catch to suppress unstripping errors
         try
         {
-            GUIStylePreset.ApplyToSkin();
-
-            if (CheatToggles.rgbMode)
-                GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f);
-            else
-                GUI.backgroundColor = GUIStylePreset.AccentBlue;
-
-            // Draw the window background manually
-            GUI.Box(_windowRect, "", GUIStylePreset.WindowStyle);
-            
-            // Draw window title
-            GUI.Label(new Rect(_windowRect.x + 8, _windowRect.y + 4, _windowRect.width - 16, 20), 
-                      "  MalumMenu  v" + MalumMenu.malumVersion, 
-                      GUIStylePreset.WindowStyle);
-
-            // Begin window content area
-            GUILayout.BeginArea(new Rect(_windowRect.x, _windowRect.y + 24, _windowRect.width, _windowRect.height - 24));
-            DrawWindowContent();
-            GUILayout.EndArea();
-
-            // Handle dragging
-            if (Event.current.type == EventType.MouseDrag && 
-                new Rect(_windowRect.x, _windowRect.y, _windowRect.width, 24).Contains(Event.current.mousePosition))
-            {
-                _windowRect.x += Event.current.delta.x;
-                _windowRect.y += Event.current.delta.y;
-            }
+            _windowRect = GUI.Window(
+                (int)WindowId.MenuUI,
+                _windowRect,
+                (System.Action<int>)DrawWindow,
+                new GUIContent("  MalumMenu  v" + MalumMenu.malumVersion),
+                GUIStylePreset.WindowStyle
+            );
         }
-        catch (System.Exception ex)
-        {
-            // Suppress IL2CPP errors silently
-            if (!ex.Message.Contains("unstripping"))
-            {
-                Debug.LogError($"GUI Error: {ex.Message}");
-            }
+        catch (System.NotSupportedException) 
+        { 
+            // Silently ignore IL2CPP unstripping errors
         }
     }
 
-    private void DrawWindowContent()
+    // Mark this method to prevent IL2CPP from trying to strip it
+    [Il2CppInterop.Runtime.Attributes.HideFromIl2Cpp]
+    private void DrawWindow(int id)
     {
-        // Top accent bar
+        // 2-px blue accent bar at top
         GUI.DrawTexture(new Rect(0f, 0f, windowWidth, 2f), _accentTex);
-        GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight - 24), _windowBgTex);
+        // Full window background
+        GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight), _windowBgTex);
 
         GUILayout.BeginHorizontal();
 
-        // Sidebar
+        // ── Sidebar ───────────────────────────────────────────────
         float sw = windowWidth * 0.20f;
         GUILayout.BeginVertical(GUILayout.Width(sw));
-        GUI.DrawTexture(new Rect(0f, 2f, sw, windowHeight - 24), _sidebarTex);
+        GUI.DrawTexture(new Rect(0f, 2f, sw, windowHeight), _sidebarTex);
 
         GUILayout.Space(6f);
         for (int i = 0; i < _tabs.Count; i++)
         {
             bool active = (_selectedTab == i);
 
+            // Blue left-edge indicator for active tab
             if (active)
                 GUI.DrawTexture(new Rect(0f, GUILayoutUtility.GetLastRect().yMax, 3f, 32f), _accentTex);
 
@@ -203,11 +191,11 @@ public class MenuUI : MonoBehaviour
         GUILayout.FlexibleSpace();
         GUILayout.EndVertical();
 
-        // Separator
+        // ── Thin blue separator ───────────────────────────────────
         GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
         GUILayout.Space(8f);
 
-        // Content area
+        // ── Content ───────────────────────────────────────────────
         GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.80f - 18f));
         GUILayout.Space(4f);
 
@@ -216,15 +204,12 @@ public class MenuUI : MonoBehaviour
             GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
             GUILayout.Box("", GUIStylePreset.Separator, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
             GUILayout.Space(4f);
-            
-            try
-            {
-                _tabs[_selectedTab].Draw();
-            }
-            catch { /* Suppress tab errors */ }
+            _tabs[_selectedTab].Draw();
         }
 
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
+
+        GUI.DragWindow();
     }
 }
