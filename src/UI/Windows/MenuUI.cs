@@ -19,9 +19,6 @@ public class MenuUI : MonoBehaviour
     private static Texture2D _windowBgTex;
     private static Texture2D _accentTex;
     private static Texture2D _separatorTex;
-    
-    private bool _isDragging = false;
-    private Vector2 _dragOffset;
 
     private static Texture2D MakeSolid(float r, float g, float b, float a = 1f)
     {
@@ -52,9 +49,10 @@ public class MenuUI : MonoBehaviour
             windowHeight
         );
 
-        _windowBgTex  = MakeSolid(0.078f, 0.078f, 0.078f);
-        _sidebarTex   = MakeSolid(0.090f, 0.090f, 0.090f);
-        _accentTex    = MakeSolid(0.10f,  0.45f,  1.00f);
+        // Create themed textures
+        _windowBgTex  = MakeSolid(0.078f, 0.078f, 0.078f); // #141414
+        _sidebarTex   = MakeSolid(0.090f, 0.090f, 0.090f); // #171717
+        _accentTex    = MakeSolid(0.10f,  0.45f,  1.00f);  // blue accent
         _separatorTex = MakeSolid(0.10f,  0.45f,  1.00f, 0.4f);
     }
 
@@ -91,9 +89,8 @@ public class MenuUI : MonoBehaviour
 
         if (CheatToggles.openConfig)   { Utils.OpenConfigFile();           CheatToggles.openConfig   = false; }
         if (CheatToggles.reloadConfig) { MalumMenu.Plugin.Config.Reload(); CheatToggles.reloadConfig = false; }
-
-        if (CheatToggles.saveProfile) { CheatToggles.saveProfile = false; CheatToggles.SaveTogglesToProfile(); }
-        if (CheatToggles.loadProfile) { CheatToggles.LoadTogglesFromProfile(); CheatToggles.loadProfile = false; }
+        if (CheatToggles.saveProfile)  { CheatToggles.saveProfile = false; CheatToggles.SaveTogglesToProfile(); }
+        if (CheatToggles.loadProfile)  { CheatToggles.LoadTogglesFromProfile(); CheatToggles.loadProfile = false; }
 
         if (!Utils.isPlayer)
         {
@@ -138,122 +135,90 @@ public class MenuUI : MonoBehaviour
     {
         if (!isGUIActive || MalumMenu.isPanicked) return;
 
-        try
-        {
-            GUIStylePreset.ApplyToSkin();
+        // Apply custom skin styles
+        GUIStylePreset.ApplyToSkin();
 
-            if (CheatToggles.rgbMode)
-                GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f);
-            else
-                GUI.backgroundColor = GUIStylePreset.AccentBlue;
+        // RGB mode or default accent
+        if (CheatToggles.rgbMode)
+            GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f);
+        else
+            GUI.backgroundColor = GUIStylePreset.AccentBlue;
 
-            DrawMenuWindow();
-        }
-        catch (System.Exception ex)
-        {
-            // Suppress all errors silently
-            if (!ex.Message.Contains("unstripping"))
-            {
-                Debug.LogError($"Menu GUI Error: {ex.Message}");
-            }
-        }
+        _windowRect = GUI.Window(
+            (int)WindowId.MenuUI, 
+            _windowRect, 
+            (GUI.WindowFunction)WindowFunction, 
+            "  MalumMenu  v" + MalumMenu.malumVersion,
+            GUIStylePreset.WindowStyle
+        );
     }
 
-    private void DrawMenuWindow()
+    public void WindowFunction(int windowID)
     {
-        // Handle dragging
-        Rect titleBar = new Rect(_windowRect.x, _windowRect.y, _windowRect.width, 24);
-        if (Event.current.type == EventType.MouseDown && titleBar.Contains(Event.current.mousePosition))
-        {
-            _isDragging = true;
-            _dragOffset = Event.current.mousePosition - _windowRect.position;
-        }
-        else if (Event.current.type == EventType.MouseUp)
-        {
-            _isDragging = false;
-        }
-        else if (Event.current.type == EventType.MouseDrag && _isDragging)
-        {
-            _windowRect.position = Event.current.mousePosition - _dragOffset;
-        }
+        // Top accent bar (2px)
+        GUI.DrawTexture(new Rect(0f, 0f, windowWidth, 2f), _accentTex);
+        // Window background
+        GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight), _windowBgTex);
 
-        // Draw window chrome
-        GUI.Box(_windowRect, "", GUIStylePreset.WindowStyle);
-        GUI.Label(new Rect(_windowRect.x + 8, _windowRect.y + 2, _windowRect.width - 16, 20), 
-                  "  MalumMenu  v" + MalumMenu.malumVersion, GUIStylePreset.WindowStyle);
+        GUILayout.BeginHorizontal();
 
-        // Draw content with proper cleanup
-        try
+        // ══════════════════════════════════════════════════════════
+        // SIDEBAR (20% width)
+        // ══════════════════════════════════════════════════════════
+        float sidebarWidth = windowWidth * 0.20f;
+        GUILayout.BeginVertical(GUILayout.Width(sidebarWidth));
+        
+        // Draw sidebar background
+        GUI.DrawTexture(new Rect(0f, 2f, sidebarWidth, windowHeight), _sidebarTex);
+
+        GUILayout.Space(6f);
+        
+        for (int i = 0; i < _tabs.Count; i++)
         {
-            GUILayout.BeginArea(new Rect(_windowRect.x, _windowRect.y + 24, _windowRect.width, _windowRect.height - 24));
+            bool isActive = (_selectedTab == i);
+
+            // Blue left-edge indicator for active tab
+            if (isActive)
+                GUI.DrawTexture(new Rect(0f, GUILayoutUtility.GetLastRect().yMax, 3f, 32f), _accentTex);
+
+            GUIStyle tabStyle = isActive ? GUIStylePreset.TabButtonActive : GUIStylePreset.TabButton;
             
-            GUI.DrawTexture(new Rect(0f, 0f, windowWidth, 2f), _accentTex);
-            GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight - 24), _windowBgTex);
-
-            try
-            {
-                GUILayout.BeginHorizontal();
-
-                try
-                {
-                    // Sidebar
-                    float sw = windowWidth * 0.20f;
-                    GUILayout.BeginVertical(GUILayout.Width(sw));
-                    GUI.DrawTexture(new Rect(0f, 2f, sw, windowHeight - 24), _sidebarTex);
-
-                    GUILayout.Space(6f);
-                    for (int i = 0; i < _tabs.Count; i++)
-                    {
-                        bool active = (_selectedTab == i);
-                        if (active)
-                            GUI.DrawTexture(new Rect(0f, GUILayoutUtility.GetLastRect().yMax, 3f, 32f), _accentTex);
-
-                        GUIStyle style = active ? GUIStylePreset.TabButtonActive : GUIStylePreset.TabButton;
-                        if (GUILayout.Button(_tabs[i].name, style, GUILayout.Height(32)))
-                            _selectedTab = i;
-                    }
-                    GUILayout.FlexibleSpace();
-                }
-                finally
-                {
-                    GUILayout.EndVertical();
-                }
-
-                GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
-                GUILayout.Space(8f);
-
-                try
-                {
-                    // Content
-                    GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.80f - 18f));
-                    GUILayout.Space(4f);
-
-                    if (_selectedTab >= 0 && _selectedTab < _tabs.Count)
-                    {
-                        GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
-                        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
-                        GUILayout.Space(4f);
-                        
-                        try
-                        {
-                            _tabs[_selectedTab].Draw();
-                        }
-                        catch { /* Suppress tab errors */ }
-                    }
-                }
-                finally
-                {
-                    GUILayout.EndVertical();
-                }
-            }
-            finally
-            {
-                GUILayout.EndHorizontal();
-            }
+            if (GUILayout.Button(_tabs[i].name, tabStyle, GUILayout.Height(32)))
+                _selectedTab = i;
         }
-        finally
+        
+        GUILayout.FlexibleSpace();
+        GUILayout.EndVertical();
+
+        // ══════════════════════════════════════════════════════════
+        // SEPARATOR LINE
+        // ══════════════════════════════════════════════════════════
+        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
+        GUILayout.Space(8f);
+
+        // ══════════════════════════════════════════════════════════
+        // CONTENT AREA (80% width)
+        // ══════════════════════════════════════════════════════════
+        GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.80f - 18f));
+        GUILayout.Space(4f);
+
+        if (_selectedTab >= 0 && _selectedTab < _tabs.Count)
         {
-            GUILayout.EndArea();
+            // Tab title
+            GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
+            
+            // Horizontal separator below title
+            GUILayout.Box("", GUIStylePreset.Separator, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
+            GUILayout.Space(4f);
+            
+            // Tab content
+            _tabs[_selectedTab].Draw();
         }
+
+        GUILayout.EndVertical();
+        GUILayout.EndHorizontal();
+
+        // Make window draggable
+        GUI.DragWindow();
     }
 }
