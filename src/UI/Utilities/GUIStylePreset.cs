@@ -79,8 +79,8 @@ public static class GUIStylePreset
                 _separator = new GUIStyle(GUI.skin.box);
                 _separator.normal.background = MakeTex(2, 2, SeparatorColor);
                 _separator.margin  = new RectOffset { left = 0, right = 0, top = 4, bottom = 4 };
-                _separator.padding = new RectOffset();
-                _separator.border  = new RectOffset();
+                _separator.padding = new RectOffset;
+                _separator.border  = new RectOffset;
             }
             return _separator;
         }
@@ -141,7 +141,7 @@ public static class GUIStylePreset
                 _normalToggle.padding   = new RectOffset { left = 22, right = 4, top = 5, bottom = 5 };
                 _normalToggle.margin    = new RectOffset { left = 2, right = 2, top = 3, bottom = 3 };
                 _normalToggle.border    = new RectOffset { left = 2, right = 2, top = 2, bottom = 2 };
-                _normalToggle.overflow  = new RectOffset();
+                _normalToggle.overflow  = new RectOffset;
             }
             return _normalToggle;
         }
@@ -257,7 +257,7 @@ public static class GUIStylePreset
                 _tabButton.alignment = TextAnchor.MiddleLeft;
                 _tabButton.padding   = new RectOffset { left = 14, right = 6, top = 7, bottom = 7 };
                 _tabButton.margin    = new RectOffset { left = 0, right = 0, top = 1, bottom = 1 };
-                _tabButton.border    = new RectOffset();
+                _tabButton.border    = new RectOffset;
             }
             return _tabButton;
         }
