@@ -4,20 +4,21 @@ namespace MalumMenu;
 
 public static class UIHelpers
 {
-    // ApplyUIColor is now integrated into MenuUI.OnGUI for better stability,
-    // but we'll keep the logic here for future tab support.
-    public static void ApplyUIColor(float currentHue)
+    /// <summary>
+    /// Sets the background color. If no hue is provided, it defaults to MenuUI.hue.
+    /// </summary>
+    public static void ApplyUIColor(float currentHue = -1f)
     {
+        // If no value was passed, use the global hue from MenuUI
+        float hueToUse = (currentHue < 0) ? MenuUI.hue : currentHue;
+
         if (CheatToggles.rgbMode)
         {
-            GUI.backgroundColor = Color.HSVToRGB(currentHue, 0.85f, 1f);
+            GUI.backgroundColor = Color.HSVToRGB(hueToUse, 0.85f, 1f);
         }
         else
         {
             GUI.backgroundColor = GUIStylePreset.AccentBlue;
         }
     }
-
-    // ApplyBlurEffect was removed because GUI.DrawTexture(Screen) 
-    // triggers 'Method unstripping failed' in this IL2CPP build.
 }

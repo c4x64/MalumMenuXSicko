@@ -15,7 +15,6 @@ public class MenuUI : MonoBehaviour
     private int _selectedTab;
     public static float hue; 
 
-    // Manual Dragging Variables
     private bool _isDragging = false;
     private Vector2 _dragOffset;
 
@@ -85,14 +84,10 @@ public class MenuUI : MonoBehaviour
         if (!isGUIActive || MalumMenu.isPanicked) return;
 
         GUIStylePreset.ApplyToSkin();
+        
+        // Now works perfectly with the optional parameter
+        UIHelpers.ApplyUIColor();
 
-        // Safe Color Set
-        if (CheatToggles.rgbMode) 
-            GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f); 
-        else 
-            GUI.backgroundColor = GUIStylePreset.AccentBlue;
-
-        // Draw Window
         _windowRect = GUI.Window(
             (int)WindowId.MenuUI,
             _windowRect,
@@ -104,13 +99,11 @@ public class MenuUI : MonoBehaviour
 
     public void WindowFunction(int windowID)
     {
-        // Top accent line
         var accentRect = new Rect(0, 0, windowWidth, 2);
         GUI.DrawTexture(accentRect, MakeAccentTex());
 
         GUILayout.BeginHorizontal();
 
-        // Sidebar
         float sidebarW = windowWidth * 0.20f;
         GUILayout.BeginVertical(GUILayout.Width(sidebarW));
         GUI.DrawTexture(new Rect(0, 2, sidebarW, windowHeight), SidebarTex);
@@ -128,7 +121,6 @@ public class MenuUI : MonoBehaviour
         GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
         GUILayout.Space(10f);
 
-        // Content
         GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.80f - 16f));
         GUILayout.Space(4f);
 
@@ -143,14 +135,13 @@ public class MenuUI : MonoBehaviour
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
 
-        // MANUAL DRAG - Replaces the stripped GUI.DragWindow()
         HandleManualDrag();
     }
 
     private void HandleManualDrag()
     {
         Event e = Event.current;
-        Rect dragArea = new Rect(0, 0, windowWidth, 35); // Title bar area
+        Rect dragArea = new Rect(0, 0, windowWidth, 35);
 
         if (e.type == EventType.MouseDown && dragArea.Contains(e.mousePosition))
         {
