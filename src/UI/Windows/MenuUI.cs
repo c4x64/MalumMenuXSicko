@@ -156,6 +156,7 @@ public class MenuUI : MonoBehaviour
             new GUIContent("  MalumMenu  v" + MalumMenu.malumVersion), // Fix for CS1503
             GUIStylePreset.WindowStyle
         );
+    }
 
     // IL2CPP-safe: plain void(int) method, NOT cast as GUI.WindowFunction
     private void DrawWindow(int id)
