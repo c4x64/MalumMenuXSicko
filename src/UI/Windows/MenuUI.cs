@@ -14,6 +14,7 @@ public class MenuUI : MonoBehaviour
     private List<ITab> _tabs = new();
     private int _selectedTab;
     public static float hue;
+    private static GUI.WindowFunction _windowCallback;
 
     // ── Static textures (created once) ───────────────────────────
     private static Texture2D _sidebarTex;
@@ -30,32 +31,35 @@ public class MenuUI : MonoBehaviour
     }
 
     private void Start()
-    {
-        _tabs.Add(new MovementTab());
-        _tabs.Add(new ESPTab());
-        _tabs.Add(new RolesTab());
-        _tabs.Add(new ShipTab());
-        _tabs.Add(new ChatTab());
-        _tabs.Add(new AnimationsTab());
-        _tabs.Add(new ConsoleTab());
-        _tabs.Add(new HostOnlyTab());
-        _tabs.Add(new PassiveTab());
-        _tabs.Add(new ModesTab());
-        _tabs.Add(new ConfigTab());
+{
+    _tabs.Add(new MovementTab());
+    _tabs.Add(new ESPTab());
+    _tabs.Add(new RolesTab());
+    _tabs.Add(new ShipTab());
+    _tabs.Add(new ChatTab());
+    _tabs.Add(new AnimationsTab());
+    _tabs.Add(new ConsoleTab());
+    _tabs.Add(new HostOnlyTab());
+    _tabs.Add(new PassiveTab());
+    _tabs.Add(new ModesTab());
+    _tabs.Add(new ConfigTab());
 
-        _windowRect = new Rect(
-            Screen.width  / 2f - windowWidth  / 2f,
-            Screen.height / 2f - windowHeight / 2f,
-            windowWidth,
-            windowHeight
-        );
+    _windowRect = new Rect(
+        Screen.width  / 2f - windowWidth  / 2f,
+        Screen.height / 2f - windowHeight / 2f,
+        windowWidth,
+        windowHeight
+    );
 
-        // Pre-build static textures
-        _windowBgTex  = MakeSolid(0.078f, 0.078f, 0.078f); // #141414
-        _sidebarTex   = MakeSolid(0.090f, 0.090f, 0.090f); // #171717
-        _accentTex    = MakeSolid(0.10f,  0.45f,  1.00f);  // blue accent
-        _separatorTex = MakeSolid(0.10f,  0.45f,  1.00f,   0.4f);
-    }
+    // Pre-build static textures
+    _windowBgTex  = MakeSolid(0.078f, 0.078f, 0.078f);
+    _sidebarTex   = MakeSolid(0.090f, 0.090f, 0.090f);
+    _accentTex    = MakeSolid(0.10f,  0.45f,  1.00f);
+    _separatorTex = MakeSolid(0.10f,  0.45f,  1.00f, 0.4f);
+    
+    // ✅ Initialize the window callback ONCE - IL2CPP safe
+    _windowCallback = new GUI.WindowFunction(DrawWindow);
+}
 
     private void Update()
     {
@@ -160,54 +164,49 @@ public class MenuUI : MonoBehaviour
 
     // IL2CPP-safe: plain void(int) method, NOT cast as GUI.WindowFunction
     private void DrawWindow(int id)
+{
+    // ... rest of your existing DrawWindow code stays the same ...
+    GUI.DrawTexture(new Rect(0f, 0f, windowWidth, 2f), _accentTex);
+    GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight), _windowBgTex);
+
+    GUILayout.BeginHorizontal();
+
+    float sw = windowWidth * 0.20f;
+    GUILayout.BeginVertical(GUILayout.Width(sw));
+    GUI.DrawTexture(new Rect(0f, 2f, sw, windowHeight), _sidebarTex);
+
+    GUILayout.Space(6f);
+    for (int i = 0; i < _tabs.Count; i++)
     {
-        // 2-px blue accent bar at top
-        GUI.DrawTexture(new Rect(0f, 0f, windowWidth, 2f), _accentTex);
-        // Full window background
-        GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight), _windowBgTex);
+        bool active = (_selectedTab == i);
 
-        GUILayout.BeginHorizontal();
+        if (active)
+            GUI.DrawTexture(new Rect(0f, GUILayoutUtility.GetLastRect().yMax, 3f, 32f), _accentTex);
 
-        // ── Sidebar ───────────────────────────────────────────────
-        float sw = windowWidth * 0.20f;
-        GUILayout.BeginVertical(GUILayout.Width(sw));
-        GUI.DrawTexture(new Rect(0f, 2f, sw, windowHeight), _sidebarTex);
-
-        GUILayout.Space(6f);
-        for (int i = 0; i < _tabs.Count; i++)
-        {
-            bool active = (_selectedTab == i);
-
-            // Blue left-edge indicator for active tab
-            if (active)
-                GUI.DrawTexture(new Rect(0f, GUILayoutUtility.GetLastRect().yMax, 3f, 32f), _accentTex);
-
-            GUIStyle style = active ? GUIStylePreset.TabButtonActive : GUIStylePreset.TabButton;
-            if (GUILayout.Button(_tabs[i].name, style, GUILayout.Height(32)))
-                _selectedTab = i;
-        }
-        GUILayout.FlexibleSpace();
-        GUILayout.EndVertical();
-
-        // ── Thin blue separator ───────────────────────────────────
-        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
-        GUILayout.Space(8f);
-
-        // ── Content ───────────────────────────────────────────────
-        GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.80f - 18f));
-        GUILayout.Space(4f);
-
-        if (_selectedTab >= 0 && _selectedTab < _tabs.Count)
-        {
-            GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
-            GUILayout.Box("", GUIStylePreset.Separator, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
-            GUILayout.Space(4f);
-            _tabs[_selectedTab].Draw();
-        }
-
-        GUILayout.EndVertical();
-        GUILayout.EndHorizontal();
-
-        GUI.DragWindow();
+        GUIStyle style = active ? GUIStylePreset.TabButtonActive : GUIStylePreset.TabButton;
+        if (GUILayout.Button(_tabs[i].name, style, GUILayout.Height(32)))
+            _selectedTab = i;
     }
+    GUILayout.FlexibleSpace();
+    GUILayout.EndVertical();
+
+    GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
+    GUILayout.Space(8f);
+
+    GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.80f - 18f));
+    GUILayout.Space(4f);
+
+    if (_selectedTab >= 0 && _selectedTab < _tabs.Count)
+    {
+        GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
+        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
+        GUILayout.Space(4f);
+        _tabs[_selectedTab].Draw();
+    }
+
+    GUILayout.EndVertical();
+    GUILayout.EndHorizontal();
+
+    GUI.DragWindow();
+}
 }

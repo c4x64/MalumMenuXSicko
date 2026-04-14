@@ -14,6 +14,8 @@ public struct CheatToggles
     public static bool teleportCursor;
     public static bool fakeRevive;
     public static bool invertControls;
+    public static bool speedHack;
+    public static bool espEnabled;
 
     // Roles
     public static bool setFakeRole;
