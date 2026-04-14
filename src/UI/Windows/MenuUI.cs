@@ -148,14 +148,14 @@ public class MenuUI : MonoBehaviour
 
         // ── FIX: Do NOT cast to GUI.WindowFunction — pass a plain lambda
         //    that IL2CPP can handle without method-unstripping.
+       // Change line 154-160 in MenuUI.cs to this:
         _windowRect = GUI.Window(
             (int)WindowId.MenuUI,
             _windowRect,
-            DrawWindow,         // direct method reference — no cast needed
-            "  MalumMenu  v" + MalumMenu.malumVersion,
+            id => DrawWindow(id), 
+            new GUIContent("  MalumMenu  v" + MalumMenu.malumVersion), // Fix for CS1503
             GUIStylePreset.WindowStyle
         );
-    }
 
     // IL2CPP-safe: plain void(int) method, NOT cast as GUI.WindowFunction
     private void DrawWindow(int id)
