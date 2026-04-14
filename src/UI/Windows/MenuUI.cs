@@ -144,20 +144,25 @@ public class MenuUI : MonoBehaviour
             else
                 GUI.backgroundColor = GUIStylePreset.AccentBlue;
 
-            // ✅ Draw window content directly - NO delegate callback
-            _windowRect = GUILayout.Window(
-                (int)WindowId.MenuUI,
-                _windowRect,
-                new GUIContent("  MalumMenu  v" + MalumMenu.malumVersion),
-                GUIStylePreset.WindowStyle
-            );
+            // Draw the window background manually
+            GUI.Box(_windowRect, "", GUIStylePreset.WindowStyle);
             
-            // Draw window contents manually in the window area
-            if (Event.current.type == EventType.Repaint || Event.current.type == EventType.Layout)
+            // Draw window title
+            GUI.Label(new Rect(_windowRect.x + 8, _windowRect.y + 4, _windowRect.width - 16, 20), 
+                      "  MalumMenu  v" + MalumMenu.malumVersion, 
+                      GUIStylePreset.WindowStyle);
+
+            // Begin window content area
+            GUILayout.BeginArea(new Rect(_windowRect.x, _windowRect.y + 24, _windowRect.width, _windowRect.height - 24));
+            DrawWindowContent();
+            GUILayout.EndArea();
+
+            // Handle dragging
+            if (Event.current.type == EventType.MouseDrag && 
+                new Rect(_windowRect.x, _windowRect.y, _windowRect.width, 24).Contains(Event.current.mousePosition))
             {
-                GUILayout.BeginArea(_windowRect);
-                DrawWindowContent();
-                GUILayout.EndArea();
+                _windowRect.x += Event.current.delta.x;
+                _windowRect.y += Event.current.delta.y;
             }
         }
         catch (System.Exception ex)
@@ -165,7 +170,7 @@ public class MenuUI : MonoBehaviour
             // Suppress IL2CPP errors silently
             if (!ex.Message.Contains("unstripping"))
             {
-                MalumMenu.Logger.LogError($"GUI Error: {ex.Message}");
+                Debug.LogError($"GUI Error: {ex.Message}");
             }
         }
     }
@@ -174,14 +179,14 @@ public class MenuUI : MonoBehaviour
     {
         // Top accent bar
         GUI.DrawTexture(new Rect(0f, 0f, windowWidth, 2f), _accentTex);
-        GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight), _windowBgTex);
+        GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight - 24), _windowBgTex);
 
         GUILayout.BeginHorizontal();
 
         // Sidebar
         float sw = windowWidth * 0.20f;
         GUILayout.BeginVertical(GUILayout.Width(sw));
-        GUI.DrawTexture(new Rect(0f, 2f, sw, windowHeight), _sidebarTex);
+        GUI.DrawTexture(new Rect(0f, 2f, sw, windowHeight - 24), _sidebarTex);
 
         GUILayout.Space(6f);
         for (int i = 0; i < _tabs.Count; i++)
@@ -221,7 +226,5 @@ public class MenuUI : MonoBehaviour
 
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
-
-        GUI.DragWindow();
     }
 }
