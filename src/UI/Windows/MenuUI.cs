@@ -6,27 +6,21 @@ namespace MalumMenu;
 
 public class MenuUI : MonoBehaviour
 {
+    // --- Window Properties ---
     public static int windowHeight = 560;
-    public static int windowWidth  = 720;
+    public static int windowWidth = 720;
     private Rect _windowRect;
 
+    // --- State ---
     public static bool isGUIActive = false;
     private List<ITab> _tabs = new();
     private int _selectedTab;
-    public static float hue;
+    public static float hue; // For RGB mode
 
+    // --- Themed Textures ---
     private static Texture2D _sidebarTex;
     private static Texture2D _windowBgTex;
     private static Texture2D _accentTex;
-    private static Texture2D _separatorTex;
-
-    private static Texture2D MakeSolid(float r, float g, float b, float a = 1f)
-    {
-        var t = new Texture2D(1, 1);
-        t.SetPixel(0, 0, new Color(r, g, b, a));
-        t.Apply();
-        return t;
-    }
 
     private void Start()
     {
@@ -42,20 +36,19 @@ public class MenuUI : MonoBehaviour
         _tabs.Add(new ModesTab());
         _tabs.Add(new ConfigTab());
 
-        _windowRect = new Rect(
-            Screen.width  / 2f - windowWidth  / 2f,
+        _windowRect = new(
+            Screen.width / 2f - windowWidth / 2f,
             Screen.height / 2f - windowHeight / 2f,
             windowWidth,
             windowHeight
         );
 
-        // Create themed textures
-        _windowBgTex  = MakeSolid(0.078f, 0.078f, 0.078f); // #141414
-        _sidebarTex   = MakeSolid(0.090f, 0.090f, 0.090f); // #171717
-        _accentTex    = MakeSolid(0.10f,  0.45f,  1.00f);  // blue accent
-        _separatorTex = MakeSolid(0.10f,  0.45f,  1.00f, 0.4f);
+        // Pre-build static textures for performance
+        _sidebarTex = GUIStylePreset.MakeTex(1, 1, GUIStylePreset.BgSidebar);
+        _windowBgTex = GUIStylePreset.MakeTex(1, 1, GUIStylePreset.BgBase);
     }
-
+    
+    // The Update method is unchanged from your working version
     private void Update()
     {
         if (Input.GetKeyDown(Utils.StringToKeycode(MalumMenu.menuKeybind.Value)))
@@ -63,162 +56,93 @@ public class MenuUI : MonoBehaviour
             isGUIActive = !isGUIActive;
             if (MalumMenu.menuOpenOnMouse.Value)
             {
-                Vector2 mp = Input.mousePosition;
-                _windowRect.position = new Vector2(mp.x, Screen.height - mp.y);
+                Vector2 mousePosition = Input.mousePosition;
+                _windowRect.position = new Vector2(mousePosition.x, Screen.height - mousePosition.y);
             }
         }
-
-        if (CheatToggles.rgbMode)
-        {
-            hue += Time.deltaTime * 0.3f;
-            if (hue > 1f) hue -= 1f;
-        }
-
+        if (CheatToggles.rgbMode) { hue = (hue + Time.deltaTime * 0.3f) % 1f; }
         if (CheatToggles.stealthMode != MalumMenu.inStealthMode)
         {
             MalumMenu.inStealthMode = CheatToggles.stealthMode;
             Scene scene = SceneManager.GetActiveScene();
-            if (scene.name == "MainMenu" || scene.name == "MatchMaking")
-                SceneManager.LoadScene(scene.name);
+            if (scene.name == "MainMenu" || scene.name == "MatchMaking") { SceneManager.LoadScene(scene.name); }
         }
-
         if (CheatToggles.panicMode) Utils.Panic();
-
         var stamp = ModManager.Instance.ModStamp;
         if (stamp) stamp.enabled = !(MalumMenu.inStealthMode || MalumMenu.isPanicked);
-
-        if (CheatToggles.openConfig)   { Utils.OpenConfigFile();           CheatToggles.openConfig   = false; }
+        if (CheatToggles.openConfig) { Utils.OpenConfigFile(); CheatToggles.openConfig = false; }
         if (CheatToggles.reloadConfig) { MalumMenu.Plugin.Config.Reload(); CheatToggles.reloadConfig = false; }
-        if (CheatToggles.saveProfile)  { CheatToggles.saveProfile = false; CheatToggles.SaveTogglesToProfile(); }
-        if (CheatToggles.loadProfile)  { CheatToggles.LoadTogglesFromProfile(); CheatToggles.loadProfile = false; }
-
-        if (!Utils.isPlayer)
-        {
-            CheatToggles.setFakeRole = false; CheatToggles.killAll = false;
-            CheatToggles.telekillPlayer = false; CheatToggles.killAllCrew = false;
-            CheatToggles.killAllImps = false; CheatToggles.teleportPlayer = false;
-            CheatToggles.spectate = false; CheatToggles.freecam = false;
-            CheatToggles.killPlayer = false; CheatToggles.fakeRevive = false;
-            CheatToggles.callMeeting = false;
-        }
-        if (!Utils.isShip)
-        {
-            CheatToggles.sabotageMap = false; CheatToggles.unfixableLights = false;
-            CheatToggles.completeMyTasks = false; CheatToggles.kickVents = false;
-            CheatToggles.reportBody = false; CheatToggles.closeMeeting = false;
-            CheatToggles.reactorSab = false; CheatToggles.oxygenSab = false;
-            CheatToggles.commsSab = false; CheatToggles.elecSab = false;
-            CheatToggles.mushSab = false; CheatToggles.closeAllDoors = false;
-            CheatToggles.openAllDoors = false; CheatToggles.spamCloseAllDoors = false;
-            CheatToggles.spamOpenAllDoors = false; CheatToggles.mushSpore = false;
-            MalumCheats.StopShipAnimCheats();
-        }
-        if (!Utils.isHost && !Utils.isFreePlay)
-        {
-            CheatToggles.killAll = false; CheatToggles.telekillPlayer = false;
-            CheatToggles.killAllCrew = false; CheatToggles.killAllImps = false;
-            CheatToggles.killPlayer = false; CheatToggles.ejectPlayer = false;
-            CheatToggles.noKillCd = false; CheatToggles.killAnyone = false;
-            CheatToggles.killVanished = false; CheatToggles.forceStartGame = false;
-            CheatToggles.skipMeeting = false; CheatToggles.voteImmune = false;
-            CheatToggles.noGameEnd = false; CheatToggles.showProtectMenu = false;
-            CheatToggles.showRolesMenu = false; CheatToggles.noOptionsLimits = false;
-        }
-        if (!Utils.isMeeting)
-        {
-            CheatToggles.skipMeeting = false;
-            CheatToggles.ejectPlayer = false;
-        }
+        if (CheatToggles.saveProfile) { CheatToggles.saveProfile = false; CheatToggles.SaveTogglesToProfile(); }
+        if (CheatToggles.loadProfile) { CheatToggles.LoadTogglesFromProfile(); CheatToggles.loadProfile = false; }
+        if (!Utils.isPlayer) { CheatToggles.setFakeRole = false; CheatToggles.killAll = false; CheatToggles.telekillPlayer = false; CheatToggles.killAllCrew = false; CheatToggles.killAllImps = false; CheatToggles.teleportPlayer = false; CheatToggles.spectate = false; CheatToggles.freecam = false; CheatToggles.killPlayer = false; CheatToggles.fakeRevive = false; CheatToggles.callMeeting = false; }
+        if (!Utils.isShip) { CheatToggles.sabotageMap = false; CheatToggles.unfixableLights = false; CheatToggles.completeMyTasks = false; CheatToggles.kickVents = false; CheatToggles.reportBody = false; CheatToggles.closeMeeting = false; CheatToggles.reactorSab = false; CheatToggles.oxygenSab = false; CheatToggles.commsSab = false; CheatToggles.elecSab = false; CheatToggles.mushSab = false; CheatToggles.closeAllDoors = false; CheatToggles.openAllDoors = false; CheatToggles.spamCloseAllDoors = false; CheatToggles.spamOpenAllDoors = false; CheatToggles.mushSpore = false; MalumCheats.StopShipAnimCheats(); }
+        if (!Utils.isHost && !Utils.isFreePlay) { CheatToggles.killAll = false; CheatToggles.telekillPlayer = false; CheatToggles.killAllCrew = false; CheatToggles.killAllImps = false; CheatToggles.killPlayer = false; CheatToggles.ejectPlayer = false; CheatToggles.noKillCd = false; CheatToggles.killAnyone = false; CheatToggles.killVanished = false; CheatToggles.forceStartGame = false; CheatToggles.skipMeeting = false; CheatToggles.voteImmune = false; CheatToggles.noGameEnd = false; CheatToggles.showProtectMenu = false; CheatToggles.showRolesMenu = false; CheatToggles.noOptionsLimits = false; }
+        if (!Utils.isMeeting) { CheatToggles.skipMeeting = false; CheatToggles.ejectPlayer = false; }
     }
 
     public void OnGUI()
     {
         if (!isGUIActive || MalumMenu.isPanicked) return;
 
-        // Apply custom skin styles
+        // Apply custom styles to default GUI elements if needed
         GUIStylePreset.ApplyToSkin();
-
-        // RGB mode or default accent
-        if (CheatToggles.rgbMode)
-            GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f);
-        else
-            GUI.backgroundColor = GUIStylePreset.AccentBlue;
-
+        
+        // Use your helper to set the main color for accents
+        UIHelpers.ApplyUIColor();
+        
+        // This is your working GUI.Window call, now with the modern style
         _windowRect = GUI.Window(
             (int)WindowId.MenuUI, 
             _windowRect, 
             (GUI.WindowFunction)WindowFunction, 
-            "  MalumMenu  v" + MalumMenu.malumVersion,
-            GUIStylePreset.WindowStyle
+            "MalumMenu v" + MalumMenu.malumVersion,
+            GUIStylePreset.WindowStyle // Use the modern window style
         );
     }
 
     public void WindowFunction(int windowID)
     {
-        // Top accent bar (2px)
-        GUI.DrawTexture(new Rect(0f, 0f, windowWidth, 2f), _accentTex);
-        // Window background
-        GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight), _windowBgTex);
+        // Dynamically create the accent texture based on the current GUI color
+        _accentTex = GUIStylePreset.MakeTex(1, 1, GUI.backgroundColor);
 
+        // --- Draw modern background elements ---
+        GUI.DrawTexture(new Rect(0, 24, _windowRect.width, _windowRect.height - 24), _windowBgTex);
+        GUI.DrawTexture(new Rect(0, 24, windowWidth * 0.20f, _windowRect.height - 24), _sidebarTex);
+        GUI.DrawTexture(new Rect(0, 24, _windowRect.width, 2), _accentTex);
+
+        // --- Main Layout ---
         GUILayout.BeginHorizontal();
 
-        // ══════════════════════════════════════════════════════════
-        // SIDEBAR (20% width)
-        // ══════════════════════════════════════════════════════════
-        float sidebarWidth = windowWidth * 0.20f;
-        GUILayout.BeginVertical(GUILayout.Width(sidebarWidth));
-        
-        // Draw sidebar background
-        GUI.DrawTexture(new Rect(0f, 2f, sidebarWidth, windowHeight), _sidebarTex);
-
-        GUILayout.Space(6f);
-        
-        for (int i = 0; i < _tabs.Count; i++)
+        // --- Left sidebar (20% width) ---
+        GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.20f));
+        for (var i = 0; i < _tabs.Count; i++)
         {
             bool isActive = (_selectedTab == i);
+            GUIStyle style = isActive ? GUIStylePreset.TabButtonActive : GUIStylePreset.TabButton;
 
-            // Blue left-edge indicator for active tab
-            if (isActive)
-                GUI.DrawTexture(new Rect(0f, GUILayoutUtility.GetLastRect().yMax, 3f, 32f), _accentTex);
-
-            GUIStyle tabStyle = isActive ? GUIStylePreset.TabButtonActive : GUIStylePreset.TabButton;
+            // Draw the active tab indicator line
+            if (isActive) 
+                GUI.DrawTexture(new Rect(0f, GUILayoutUtility.GetLastRect().yMax + 7, 3f, 21f), _accentTex);
             
-            if (GUILayout.Button(_tabs[i].name, tabStyle, GUILayout.Height(32)))
+            if (GUILayout.Button(_tabs[i].name, style, GUILayout.Height(35)))
                 _selectedTab = i;
         }
-        
-        GUILayout.FlexibleSpace();
         GUILayout.EndVertical();
 
-        // ══════════════════════════════════════════════════════════
-        // SEPARATOR LINE
-        // ══════════════════════════════════════════════════════════
+        // --- Vertical separator line ---
         GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
-        GUILayout.Space(8f);
+        GUILayout.Space(10f);
 
-        // ══════════════════════════════════════════════════════════
-        // CONTENT AREA (80% width)
-        // ══════════════════════════════════════════════════════════
-        GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.80f - 18f));
-        GUILayout.Space(4f);
-
+        // --- Right content area ---
+        GUILayout.BeginVertical(); 
         if (_selectedTab >= 0 && _selectedTab < _tabs.Count)
         {
-            // Tab title
             GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
-            
-            // Horizontal separator below title
-            GUILayout.Box("", GUIStylePreset.Separator, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
-            GUILayout.Space(4f);
-            
-            // Tab content
             _tabs[_selectedTab].Draw();
         }
-
         GUILayout.EndVertical();
-        GUILayout.EndHorizontal();
 
-        // Make window draggable
+        GUILayout.EndHorizontal();
         GUI.DragWindow();
     }
 }
