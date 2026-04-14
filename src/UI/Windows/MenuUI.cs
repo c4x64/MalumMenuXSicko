@@ -15,6 +15,10 @@ public class MenuUI : MonoBehaviour
     private int _selectedTab;
     public static float hue; 
 
+    // Manual Dragging Variables
+    private bool _isDragging = false;
+    private Vector2 _dragOffset;
+
     private static Texture2D _sidebarTex;
     private static Texture2D SidebarTex
     {
@@ -23,7 +27,7 @@ public class MenuUI : MonoBehaviour
             if (_sidebarTex == null)
             {
                 _sidebarTex = new Texture2D(1, 1);
-                _sidebarTex.SetPixel(0, 0, GUIStylePreset.BgSidebar);
+                _sidebarTex.SetPixel(0, 0, new Color(0.06f, 0.06f, 0.09f, 1f));
                 _sidebarTex.Apply();
             }
             return _sidebarTex;
@@ -54,21 +58,17 @@ public class MenuUI : MonoBehaviour
 
     private void Update()
     {
-        // 1. Listen for the Delete key specifically
         if (Input.GetKeyDown(KeyCode.Delete))
         {
             isGUIActive = !isGUIActive;
-            Debug.Log("[MalumMenu] Menu Toggled: " + isGUIActive); 
         }
 
-        // 2. RGB cycling
         if (CheatToggles.rgbMode)
         {
-            hue += Time.deltaTime * 0.1f; // Slowed down for better aesthetics
+            hue += Time.deltaTime * 0.1f;
             if (hue > 1f) hue -= 1f;
         }
 
-        // 3. Keep existing game logic checks
         if (CheatToggles.stealthMode != MalumMenu.inStealthMode)
         {
             MalumMenu.inStealthMode = CheatToggles.stealthMode;
@@ -78,44 +78,33 @@ public class MenuUI : MonoBehaviour
         }
 
         if (CheatToggles.panicMode) Utils.Panic();
-
-        // (Keeping all your other logic checks for Player/Ship/Host status below...)
-        // ... [Rest of your Update logic remains the same] ...
     }
 
-   public void OnGUI()
-{
-    // 1. Safety check
-    if (!isGUIActive || MalumMenu.isPanicked) return;
-
-    // 2. Apply Theme (Replaces the broken InitStyles call)
-    GUIStylePreset.ApplyToSkin();
-
-    // 3. Optional: Set Accent Color (Replacing the crashy ApplyUIColor)
-    if (CheatToggles.rgbMode) 
+    public void OnGUI()
     {
-        GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f); 
-    }
-    else 
-    {
-        GUI.backgroundColor = GUIStylePreset.AccentBlue;
+        if (!isGUIActive || MalumMenu.isPanicked) return;
+
+        GUIStylePreset.ApplyToSkin();
+
+        // Safe Color Set
+        if (CheatToggles.rgbMode) 
+            GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f); 
+        else 
+            GUI.backgroundColor = GUIStylePreset.AccentBlue;
+
+        // Draw Window
+        _windowRect = GUI.Window(
+            (int)WindowId.MenuUI,
+            _windowRect,
+            (GUI.WindowFunction)WindowFunction,
+            "  ◈  MalumMenu",
+            GUIStylePreset.WindowStyle
+        );
     }
 
-    // 4. Reset style cache to ensure textures are fresh
-    GUIStylePreset.Reset();
-
-    // 5. Draw the Window
-    _windowRect = GUI.Window(
-        (int)WindowId.MenuUI,
-        _windowRect,
-        (GUI.WindowFunction)WindowFunction,
-        "  ◈  MalumMenu  v" + MalumMenu.malumVersion,
-        GUIStylePreset.WindowStyle
-    );
-}
     public void WindowFunction(int windowID)
     {
-        // Top-border accent line
+        // Top accent line
         var accentRect = new Rect(0, 0, windowWidth, 2);
         GUI.DrawTexture(accentRect, MakeAccentTex());
 
@@ -136,7 +125,6 @@ public class MenuUI : MonoBehaviour
         GUILayout.FlexibleSpace();
         GUILayout.EndVertical();
 
-        // Vertical Separator
         GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
         GUILayout.Space(10f);
 
@@ -155,7 +143,28 @@ public class MenuUI : MonoBehaviour
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
 
-        GUI.DragWindow();
+        // MANUAL DRAG - Replaces the stripped GUI.DragWindow()
+        HandleManualDrag();
+    }
+
+    private void HandleManualDrag()
+    {
+        Event e = Event.current;
+        Rect dragArea = new Rect(0, 0, windowWidth, 35); // Title bar area
+
+        if (e.type == EventType.MouseDown && dragArea.Contains(e.mousePosition))
+        {
+            _isDragging = true;
+            _dragOffset = e.mousePosition;
+        }
+        
+        if (e.type == EventType.MouseUp) _isDragging = false;
+
+        if (_isDragging && e.type == EventType.MouseDrag)
+        {
+            _windowRect.x += e.mousePosition.x - _dragOffset.x;
+            _windowRect.y += e.mousePosition.y - _dragOffset.y;
+        }
     }
 
     private static Texture2D _accentTex;

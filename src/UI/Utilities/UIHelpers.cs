@@ -4,21 +4,20 @@ namespace MalumMenu;
 
 public static class UIHelpers
 {
-    /// <summary>
-    /// Sets the global GUI.backgroundColor for the menu.
-    /// No textures are drawn here to avoid IL2CPP unstripping errors.
-    /// </summary>
-    public static void ApplyUIColor()
+    // ApplyUIColor is now integrated into MenuUI.OnGUI for better stability,
+    // but we'll keep the logic here for future tab support.
+    public static void ApplyUIColor(float currentHue)
     {
         if (CheatToggles.rgbMode)
         {
-            // Syncs with the hue variable in MenuUI for RGB effect
-            GUI.backgroundColor = Color.HSVToRGB(MenuUI.hue, 0.85f, 1f);
+            GUI.backgroundColor = Color.HSVToRGB(currentHue, 0.85f, 1f);
         }
         else
         {
-            // Default to your sleek Neon Blue
             GUI.backgroundColor = GUIStylePreset.AccentBlue;
         }
     }
+
+    // ApplyBlurEffect was removed because GUI.DrawTexture(Screen) 
+    // triggers 'Method unstripping failed' in this IL2CPP build.
 }
