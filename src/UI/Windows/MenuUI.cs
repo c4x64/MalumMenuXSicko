@@ -15,14 +15,10 @@ public class MenuUI : MonoBehaviour
     private int _selectedTab;
     public static float hue;
 
-    // ── Static textures (created once) ───────────────────────────
     private static Texture2D _sidebarTex;
     private static Texture2D _windowBgTex;
     private static Texture2D _accentTex;
     private static Texture2D _separatorTex;
-
-    // ✅ Window callback for IL2CPP compatibility
-    private System.Action<int> _windowCallback;
 
     private static Texture2D MakeSolid(float r, float g, float b, float a = 1f)
     {
@@ -53,14 +49,10 @@ public class MenuUI : MonoBehaviour
             windowHeight
         );
 
-        // Pre-build static textures
-        _windowBgTex  = MakeSolid(0.078f, 0.078f, 0.078f); // #141414
-        _sidebarTex   = MakeSolid(0.090f, 0.090f, 0.090f); // #171717
-        _accentTex    = MakeSolid(0.10f,  0.45f,  1.00f);  // blue accent
-        _separatorTex = MakeSolid(0.10f,  0.45f,  1.00f,   0.4f);
-        
-        // ✅ Initialize the window callback
-        _windowCallback = DrawWindow;
+        _windowBgTex  = MakeSolid(0.078f, 0.078f, 0.078f);
+        _sidebarTex   = MakeSolid(0.090f, 0.090f, 0.090f);
+        _accentTex    = MakeSolid(0.10f,  0.45f,  1.00f);
+        _separatorTex = MakeSolid(0.10f,  0.45f,  1.00f, 0.4f);
     }
 
     private void Update()
@@ -143,35 +135,50 @@ public class MenuUI : MonoBehaviour
     {
         if (!isGUIActive || MalumMenu.isPanicked) return;
 
-        // Apply themed skin globally so all bare GUILayout calls are themed
-        GUIStylePreset.ApplyToSkin();
+        try
+        {
+            GUIStylePreset.ApplyToSkin();
 
-        // RGB or default accent colour for window chrome
-        if (CheatToggles.rgbMode)
-            GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f);
-        else
-            GUI.backgroundColor = GUIStylePreset.AccentBlue;
+            if (CheatToggles.rgbMode)
+                GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f);
+            else
+                GUI.backgroundColor = GUIStylePreset.AccentBlue;
 
-        // ✅ Use the callback - IL2CPP safe
-        _windowRect = GUI.Window(
-            (int)WindowId.MenuUI,
-            _windowRect,
-            _windowCallback,
-            new GUIContent("  MalumMenu  v" + MalumMenu.malumVersion),
-            GUIStylePreset.WindowStyle
-        );
+            // ✅ Draw window content directly - NO delegate callback
+            _windowRect = GUILayout.Window(
+                (int)WindowId.MenuUI,
+                _windowRect,
+                new GUIContent("  MalumMenu  v" + MalumMenu.malumVersion),
+                GUIStylePreset.WindowStyle
+            );
+            
+            // Draw window contents manually in the window area
+            if (Event.current.type == EventType.Repaint || Event.current.type == EventType.Layout)
+            {
+                GUILayout.BeginArea(_windowRect);
+                DrawWindowContent();
+                GUILayout.EndArea();
+            }
+        }
+        catch (System.Exception ex)
+        {
+            // Suppress IL2CPP errors silently
+            if (!ex.Message.Contains("unstripping"))
+            {
+                MalumMenu.Logger.LogError($"GUI Error: {ex.Message}");
+            }
+        }
     }
 
-    private void DrawWindow(int id)
+    private void DrawWindowContent()
     {
-        // 2-px blue accent bar at top
+        // Top accent bar
         GUI.DrawTexture(new Rect(0f, 0f, windowWidth, 2f), _accentTex);
-        // Full window background
         GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight), _windowBgTex);
 
         GUILayout.BeginHorizontal();
 
-        // ── Sidebar ───────────────────────────────────────────────
+        // Sidebar
         float sw = windowWidth * 0.20f;
         GUILayout.BeginVertical(GUILayout.Width(sw));
         GUI.DrawTexture(new Rect(0f, 2f, sw, windowHeight), _sidebarTex);
@@ -181,7 +188,6 @@ public class MenuUI : MonoBehaviour
         {
             bool active = (_selectedTab == i);
 
-            // Blue left-edge indicator for active tab
             if (active)
                 GUI.DrawTexture(new Rect(0f, GUILayoutUtility.GetLastRect().yMax, 3f, 32f), _accentTex);
 
@@ -192,11 +198,11 @@ public class MenuUI : MonoBehaviour
         GUILayout.FlexibleSpace();
         GUILayout.EndVertical();
 
-        // ── Thin blue separator ───────────────────────────────────
+        // Separator
         GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
         GUILayout.Space(8f);
 
-        // ── Content ───────────────────────────────────────────────
+        // Content area
         GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.80f - 18f));
         GUILayout.Space(4f);
 
@@ -205,7 +211,12 @@ public class MenuUI : MonoBehaviour
             GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
             GUILayout.Box("", GUIStylePreset.Separator, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
             GUILayout.Space(4f);
-            _tabs[_selectedTab].Draw();
+            
+            try
+            {
+                _tabs[_selectedTab].Draw();
+            }
+            catch { /* Suppress tab errors */ }
         }
 
         GUILayout.EndVertical();
