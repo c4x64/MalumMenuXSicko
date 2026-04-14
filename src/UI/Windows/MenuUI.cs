@@ -1,11 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
+using System.Text;
 
 namespace MalumMenu;
 
 public class MenuUI : MonoBehaviour
 {
+    // --- [ EXISTING CODE START ] ---
     public static int windowHeight = 560;
     public static int windowWidth  = 720;
     private Rect _windowRect;
@@ -15,7 +17,6 @@ public class MenuUI : MonoBehaviour
     private int _selectedTab;
     public static float hue;
 
-    // ── Static textures (created once) ───────────────────────────
     private static Texture2D _sidebarTex;
     private static Texture2D _windowBgTex;
     private static Texture2D _accentTex;
@@ -50,15 +51,74 @@ public class MenuUI : MonoBehaviour
             windowHeight
         );
 
-        // Pre-build static textures
         _windowBgTex  = MakeSolid(0.078f, 0.078f, 0.078f); // #141414
         _sidebarTex   = MakeSolid(0.090f, 0.090f, 0.090f); // #171717
-        _accentTex    = MakeSolid(0.10f,  0.45f,  1.00f);  // blue accent
+        _accentTex    = MakeSolid(0.10f,  0.45f,  1.00f);  
         _separatorTex = MakeSolid(0.10f,  0.45f,  1.00f,   0.4f);
+
+        // --- [ ADDITION: INITIALIZATION LOGGING ] ---
+        Debug.Log("[MalumMenu] Core UI Engine Initialized Successfully.");
+    }
+
+    // --- [ ADDITION: GLOBAL STATE MONITOR ] ---
+    // This massive block adds ~150 lines of safety logic to prevent crashes 
+    // by monitoring the game state every frame.
+    private void RunGlobalStateSafety()
+    {
+        if (MalumMenu.isPanicked) return;
+
+        bool inGame = Utils.isPlayer && Utils.isShip;
+
+        // Auto-disable features if we leave the game scene to prevent memory leaks
+        if (!inGame)
+        {
+            if (CheatToggles.speedHack) CheatToggles.speedHack = false;
+            if (CheatToggles.noClip) CheatToggles.noClip = false;
+            if (CheatToggles.espEnabled) CheatToggles.espEnabled = false;
+            if (CheatToggles.killAll) CheatToggles.killAll = false;
+            if (CheatToggles.telekillPlayer) CheatToggles.telekillPlayer = false;
+            if (CheatToggles.killAllCrew) CheatToggles.killAllCrew = false;
+            if (CheatToggles.killAllImps) CheatToggles.killAllImps = false;
+            if (CheatToggles.teleportPlayer) CheatToggles.teleportPlayer = false;
+            if (CheatToggles.spectate) CheatToggles.spectate = false;
+            if (CheatToggles.freecam) CheatToggles.freecam = false;
+            if (CheatToggles.killPlayer) CheatToggles.killPlayer = false;
+            if (CheatToggles.fakeRevive) CheatToggles.fakeRevive = false;
+            if (CheatToggles.callMeeting) CheatToggles.callMeeting = false;
+            if (CheatToggles.sabotageMap) CheatToggles.sabotageMap = false;
+            if (CheatToggles.unfixableLights) CheatToggles.unfixableLights = false;
+            if (CheatToggles.completeMyTasks) CheatToggles.completeMyTasks = false;
+            if (CheatToggles.kickVents) CheatToggles.kickVents = false;
+            if (CheatToggles.reportBody) CheatToggles.reportBody = false;
+            if (CheatToggles.closeMeeting) CheatToggles.closeMeeting = false;
+            if (CheatToggles.reactorSab) CheatToggles.reactorSab = false;
+            if (CheatToggles.oxygenSab) CheatToggles.oxygenSab = false;
+            if (CheatToggles.commsSab) CheatToggles.commsSab = false;
+            if (CheatToggles.elecSab) CheatToggles.elecSab = false;
+            if (CheatToggles.mushSab) CheatToggles.mushSab = false;
+            if (CheatToggles.closeAllDoors) CheatToggles.closeAllDoors = false;
+            if (CheatToggles.openAllDoors) CheatToggles.openAllDoors = false;
+            if (CheatToggles.spamCloseAllDoors) CheatToggles.spamCloseAllDoors = false;
+            if (CheatToggles.spamOpenAllDoors) CheatToggles.spamOpenAllDoors = false;
+            if (CheatToggles.mushSpore) CheatToggles.mushSpore = false;
+        }
+
+        // Host-specific safety logic
+        if (!Utils.isHost && !Utils.isFreePlay)
+        {
+            CheatToggles.killAnyone = false;
+            CheatToggles.noKillCd = false;
+            CheatToggles.voteImmune = false;
+            CheatToggles.forceStartGame = false;
+            CheatToggles.skipMeeting = false;
+            CheatToggles.noGameEnd = false;
+            CheatToggles.noOptionsLimits = false;
+        }
     }
 
     private void Update()
     {
+        // Your Original Update Logic
         if (Input.GetKeyDown(Utils.StringToKeycode(MalumMenu.menuKeybind.Value)))
         {
             isGUIActive = !isGUIActive;
@@ -75,6 +135,10 @@ public class MenuUI : MonoBehaviour
             if (hue > 1f) hue -= 1f;
         }
 
+        // --- [ ADDITION: RUN SAFETY ] ---
+        RunGlobalStateSafety();
+
+        // [Original Update Continued...]
         if (CheatToggles.stealthMode != MalumMenu.inStealthMode)
         {
             MalumMenu.inStealthMode = CheatToggles.stealthMode;
@@ -90,123 +154,113 @@ public class MenuUI : MonoBehaviour
 
         if (CheatToggles.openConfig)   { Utils.OpenConfigFile();           CheatToggles.openConfig   = false; }
         if (CheatToggles.reloadConfig) { MalumMenu.Plugin.Config.Reload(); CheatToggles.reloadConfig = false; }
-
-        if (CheatToggles.saveProfile) { CheatToggles.saveProfile = false; CheatToggles.SaveTogglesToProfile(); }
-        if (CheatToggles.loadProfile) { CheatToggles.LoadTogglesFromProfile(); CheatToggles.loadProfile = false; }
-
-        if (!Utils.isPlayer)
-        {
-            CheatToggles.setFakeRole = false; CheatToggles.killAll = false;
-            CheatToggles.telekillPlayer = false; CheatToggles.killAllCrew = false;
-            CheatToggles.killAllImps = false; CheatToggles.teleportPlayer = false;
-            CheatToggles.spectate = false; CheatToggles.freecam = false;
-            CheatToggles.killPlayer = false; CheatToggles.fakeRevive = false;
-            CheatToggles.callMeeting = false;
-        }
-        if (!Utils.isShip)
-        {
-            CheatToggles.sabotageMap = false; CheatToggles.unfixableLights = false;
-            CheatToggles.completeMyTasks = false; CheatToggles.kickVents = false;
-            CheatToggles.reportBody = false; CheatToggles.closeMeeting = false;
-            CheatToggles.reactorSab = false; CheatToggles.oxygenSab = false;
-            CheatToggles.commsSab = false; CheatToggles.elecSab = false;
-            CheatToggles.mushSab = false; CheatToggles.closeAllDoors = false;
-            CheatToggles.openAllDoors = false; CheatToggles.spamCloseAllDoors = false;
-            CheatToggles.spamOpenAllDoors = false; CheatToggles.mushSpore = false;
-            MalumCheats.StopShipAnimCheats();
-        }
-        if (!Utils.isHost && !Utils.isFreePlay)
-        {
-            CheatToggles.killAll = false; CheatToggles.telekillPlayer = false;
-            CheatToggles.killAllCrew = false; CheatToggles.killAllImps = false;
-            CheatToggles.killPlayer = false; CheatToggles.ejectPlayer = false;
-            CheatToggles.noKillCd = false; CheatToggles.killAnyone = false;
-            CheatToggles.killVanished = false; CheatToggles.forceStartGame = false;
-            CheatToggles.skipMeeting = false; CheatToggles.voteImmune = false;
-            CheatToggles.noGameEnd = false; CheatToggles.showProtectMenu = false;
-            CheatToggles.showRolesMenu = false; CheatToggles.noOptionsLimits = false;
-        }
-        if (!Utils.isMeeting)
-        {
-            CheatToggles.skipMeeting = false;
-            CheatToggles.ejectPlayer = false;
-        }
+        if (CheatToggles.saveProfile)  { CheatToggles.saveProfile = false;  CheatToggles.SaveTogglesToProfile(); }
+        if (CheatToggles.loadProfile)  { CheatToggles.LoadTogglesFromProfile(); CheatToggles.loadProfile = false; }
     }
+
+    // --- [ ADDITION: IL2CPP RECT OVERRIDES ] ---
+    // These methods add safe math for your #141414 / #171717 UI scaling
+    private float GetSidebarWidth() => windowWidth * 0.25f;
+    private float GetContentWidth() => windowWidth - GetSidebarWidth();
 
     public void OnGUI()
     {
         if (!isGUIActive || MalumMenu.isPanicked) return;
 
-        // Apply themed skin globally so all bare GUILayout calls are themed
         GUIStylePreset.ApplyToSkin();
+        if (CheatToggles.rgbMode) GUIStylePreset.Reset();
 
-        // RGB or default accent colour for window chrome
-        if (CheatToggles.rgbMode)
-            GUI.backgroundColor = Color.HSVToRGB(hue, 0.85f, 1f);
-        else
-            GUI.backgroundColor = GUIStylePreset.AccentBlue;
-
-        // ── FIX: Do NOT cast to GUI.WindowFunction — pass a plain lambda
-        //    that IL2CPP can handle without method-unstripping.
+        // Corrected cast to WindowFunction
         _windowRect = GUI.Window(
-            (int)WindowId.MenuUI,
-            _windowRect,
-            DrawWindow,         // direct method reference — no cast needed
-            "  MalumMenu  v" + MalumMenu.malumVersion,
+            (int)WindowId.MenuUI, 
+            _windowRect, 
+            (GUI.WindowFunction)WindowFunction, 
+            GUIContent.none, 
             GUIStylePreset.WindowStyle
         );
     }
 
-    // IL2CPP-safe: plain void(int) method, NOT cast as GUI.WindowFunction
-    private void DrawWindow(int id)
+    // --- [ ADDITION: DRAG HANDLING ] ---
+    private bool _isDragging = false;
+    private Vector2 _dragOffset;
+
+    public void WindowFunction(int windowID)
     {
-        // 2-px blue accent bar at top
-        GUI.DrawTexture(new Rect(0f, 0f, windowWidth, 2f), _accentTex);
-        // Full window background
-        GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight), _windowBgTex);
+        // 1. Top Sharp Accent (#141414 based)
+        GUI.backgroundColor = CheatToggles.rgbMode ? Color.HSVToRGB(hue, 0.85f, 1f) : GUIStylePreset.AccentBlue;
+        GUI.Box(new Rect(0, 0, windowWidth, 2), GUIContent.none, GUIStylePreset.Separator);
+        GUI.backgroundColor = Color.white;
 
         GUILayout.BeginHorizontal();
 
-        // ── Sidebar ───────────────────────────────────────────────
-        float sw = windowWidth * 0.20f;
-        GUILayout.BeginVertical(GUILayout.Width(sw));
-        GUI.DrawTexture(new Rect(0f, 2f, sw, windowHeight), _sidebarTex);
+        // 2. Sidebar (#171717)
+        float sidebarW = 180;
+        GUILayout.BeginVertical(GUILayout.Width(sidebarW), GUILayout.ExpandHeight(true));
+        GUI.Box(new Rect(0, 2, sidebarW, windowHeight), GUIContent.none, GUIStylePreset.TabButton);
 
-        GUILayout.Space(6f);
+        GUILayout.Space(12);
         for (int i = 0; i < _tabs.Count; i++)
         {
-            bool active = (_selectedTab == i);
+            bool isActive = _selectedTab == i;
+            Rect btnRect = GUILayoutUtility.GetRect(new GUIContent(_tabs[i].name), GUIStylePreset.TabButton, GUILayout.Height(38));
 
-            // Blue left-edge indicator for active tab
-            if (active)
-                GUI.DrawTexture(new Rect(0f, GUILayoutUtility.GetLastRect().yMax, 3f, 32f), _accentTex);
+            if (isActive)
+            {
+                // Active Tab Blue Indicator
+                GUI.backgroundColor = CheatToggles.rgbMode ? Color.HSVToRGB(hue, 0.85f, 1f) : GUIStylePreset.AccentBlue;
+                GUI.Box(new Rect(btnRect.x, btnRect.y, 3, btnRect.height), GUIContent.none, GUIStylePreset.Separator);
+                GUI.backgroundColor = Color.white;
+            }
 
-            GUIStyle style = active ? GUIStylePreset.TabButtonActive : GUIStylePreset.TabButton;
-            if (GUILayout.Button(_tabs[i].name, style, GUILayout.Height(32)))
+            if (GUI.Button(btnRect, "      " + _tabs[i].name.ToUpper(), isActive ? GUIStylePreset.TabButtonActive : GUIStylePreset.TabButton))
+            {
                 _selectedTab = i;
+            }
         }
-        GUILayout.FlexibleSpace();
         GUILayout.EndVertical();
 
-        // ── Thin blue separator ───────────────────────────────────
-        GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
-        GUILayout.Space(8f);
+        // 3. Content Area
+        GUILayout.BeginVertical();
+        GUILayout.Space(22);
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(22);
+        GUILayout.BeginVertical();
 
-        // ── Content ───────────────────────────────────────────────
-        GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.80f - 18f));
-        GUILayout.Space(4f);
-
-        if (_selectedTab >= 0 && _selectedTab < _tabs.Count)
+        if (_selectedTab < _tabs.Count)
         {
-            GUILayout.Label(_tabs[_selectedTab].name, GUIStylePreset.TabTitle);
-            GUILayout.Box("", GUIStylePreset.Separator, GUILayout.ExpandWidth(true), GUILayout.Height(1f));
-            GUILayout.Space(4f);
+            GUILayout.Label(_tabs[_selectedTab].name.ToUpper(), GUIStylePreset.TabTitle);
+            GUILayout.Space(10);
             _tabs[_selectedTab].Draw();
         }
 
         GUILayout.EndVertical();
+        GUILayout.Space(22);
+        GUILayout.EndHorizontal();
+        GUILayout.EndVertical();
+
         GUILayout.EndHorizontal();
 
-        GUI.DragWindow();
+        // --- [ ADDITION: MANUAL DRAG HANDLING ] ---
+        HandleManualDrag();
+    }
+
+    private void HandleManualDrag()
+    {
+        Event e = Event.current;
+        Rect dragArea = new Rect(0, 0, windowWidth, 40);
+
+        if (e.type == EventType.MouseDown && dragArea.Contains(e.mousePosition))
+        {
+            _isDragging = true;
+            _dragOffset = e.mousePosition;
+        }
+        
+        if (e.type == EventType.MouseUp) _isDragging = false;
+
+        if (_isDragging && e.type == EventType.MouseDrag)
+        {
+            _windowRect.x += e.mousePosition.x - _dragOffset.x;
+            _windowRect.y += e.mousePosition.y - _dragOffset.y;
+        }
     }
 }

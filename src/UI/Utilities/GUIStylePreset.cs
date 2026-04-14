@@ -345,4 +345,12 @@ public static class GUIStylePreset
         _scrollbarTrack = null;
         _textField      = null;
     }
+
+    // Inside your ApplyToSkin() method in GUIStylePreset.cs
+if (Separator == null)
+{
+    Separator = new GUIStyle(GUI.skin.box);
+    Separator.normal.background = _accentTex; // Use the solid blue texture
+    Separator.border = new RectOffset(0, 0, 0, 0); // Keep it sharp
+}
 }
