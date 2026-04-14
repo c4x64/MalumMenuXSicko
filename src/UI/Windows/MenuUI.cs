@@ -19,6 +19,9 @@ public class MenuUI : MonoBehaviour
     private static Texture2D _windowBgTex;
     private static Texture2D _accentTex;
     private static Texture2D _separatorTex;
+    
+    private bool _isDragging = false;
+    private Vector2 _dragOffset;
 
     private static Texture2D MakeSolid(float r, float g, float b, float a = 1f)
     {
@@ -142,45 +145,44 @@ public class MenuUI : MonoBehaviour
         else
             GUI.backgroundColor = GUIStylePreset.AccentBlue;
 
-        // Wrap in try-catch to suppress unstripping errors
-        try
+        // Handle dragging
+        Rect titleBar = new Rect(_windowRect.x, _windowRect.y, _windowRect.width, 24);
+        if (Event.current.type == EventType.MouseDown && titleBar.Contains(Event.current.mousePosition))
         {
-            _windowRect = GUI.Window(
-                (int)WindowId.MenuUI,
-                _windowRect,
-                (System.Action<int>)DrawWindow,
-                new GUIContent("  MalumMenu  v" + MalumMenu.malumVersion),
-                GUIStylePreset.WindowStyle
-            );
+            _isDragging = true;
+            _dragOffset = Event.current.mousePosition - _windowRect.position;
         }
-        catch (System.NotSupportedException) 
-        { 
-            // Silently ignore IL2CPP unstripping errors
+        else if (Event.current.type == EventType.MouseUp)
+        {
+            _isDragging = false;
         }
-    }
+        else if (Event.current.type == EventType.MouseDrag && _isDragging)
+        {
+            _windowRect.position = Event.current.mousePosition - _dragOffset;
+        }
 
-    // Mark this method to prevent IL2CPP from trying to strip it
-    [Il2CppInterop.Runtime.Attributes.HideFromIl2Cpp]
-    private void DrawWindow(int id)
-    {
-        // 2-px blue accent bar at top
+        // Draw window chrome
+        GUI.Box(_windowRect, "", GUIStylePreset.WindowStyle);
+        GUI.Label(new Rect(_windowRect.x + 8, _windowRect.y + 2, _windowRect.width - 16, 20), 
+                  "  MalumMenu  v" + MalumMenu.malumVersion, GUIStylePreset.WindowStyle);
+
+        // Draw content
+        GUILayout.BeginArea(new Rect(_windowRect.x, _windowRect.y + 24, _windowRect.width, _windowRect.height - 24));
+        
         GUI.DrawTexture(new Rect(0f, 0f, windowWidth, 2f), _accentTex);
-        // Full window background
-        GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight), _windowBgTex);
+        GUI.DrawTexture(new Rect(0f, 2f, windowWidth, windowHeight - 24), _windowBgTex);
 
         GUILayout.BeginHorizontal();
 
-        // ── Sidebar ───────────────────────────────────────────────
+        // Sidebar
         float sw = windowWidth * 0.20f;
         GUILayout.BeginVertical(GUILayout.Width(sw));
-        GUI.DrawTexture(new Rect(0f, 2f, sw, windowHeight), _sidebarTex);
+        GUI.DrawTexture(new Rect(0f, 2f, sw, windowHeight - 24), _sidebarTex);
 
         GUILayout.Space(6f);
         for (int i = 0; i < _tabs.Count; i++)
         {
             bool active = (_selectedTab == i);
-
-            // Blue left-edge indicator for active tab
             if (active)
                 GUI.DrawTexture(new Rect(0f, GUILayoutUtility.GetLastRect().yMax, 3f, 32f), _accentTex);
 
@@ -191,11 +193,10 @@ public class MenuUI : MonoBehaviour
         GUILayout.FlexibleSpace();
         GUILayout.EndVertical();
 
-        // ── Thin blue separator ───────────────────────────────────
         GUILayout.Box("", GUIStylePreset.Separator, GUILayout.Width(1f), GUILayout.ExpandHeight(true));
         GUILayout.Space(8f);
 
-        // ── Content ───────────────────────────────────────────────
+        // Content
         GUILayout.BeginVertical(GUILayout.Width(windowWidth * 0.80f - 18f));
         GUILayout.Space(4f);
 
@@ -209,7 +210,7 @@ public class MenuUI : MonoBehaviour
 
         GUILayout.EndVertical();
         GUILayout.EndHorizontal();
-
-        GUI.DragWindow();
+        
+        GUILayout.EndArea();
     }
 }
