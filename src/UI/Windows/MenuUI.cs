@@ -152,8 +152,8 @@ public class MenuUI : MonoBehaviour
         _windowRect = GUI.Window(
             (int)WindowId.MenuUI,
             _windowRect,
-            id => DrawWindow(id), 
-            new GUIContent("  MalumMenu  v" + MalumMenu.malumVersion), // Fix for CS1503
+            (GUI.WindowFunction)(id => DrawWindow(id)), // Explicit cast fix
+            new GUIContent("  MalumMenu  v" + MalumMenu.malumVersion),
             GUIStylePreset.WindowStyle
         );
     }
